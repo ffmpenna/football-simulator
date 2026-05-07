@@ -1,10 +1,48 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <!-- Outras tags que já existirem (charset, viewport, etc) -->
+
+    <!-- 1. LOGO NA ABA DO NAVEGADOR (FAVICON) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>football-simulator</title>
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- 2. TÍTULO E DESCRIÇÃO PADRÃO -->
+    <title>Simulador Flu - Libertadores 2026</title>
+    <meta
+      name="description"
+      content="Simule os cenários de classificação do Fluminense no Grupo A da Libertadores."
+    />
+
+    <!-- 3. CONFIGURAÇÃO PARA WHATSAPP, FACEBOOK, LINKEDIN (OPEN GRAPH) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://football-simulator-sandy.vercel.app/" />
+    <meta property="og:title" content="Simulador Flu - Libertadores 2026" />
+    <meta
+      property="og:description"
+      content="Simule os cenários de classificação do Fluminense no Grupo A da Libertadores."
+    />
+
+    <!-- DICA DE OURO: O WhatsApp exige o link COMPLETO da imagem (com https://), não use apenas "/banner-whatsapp.jpg" -->
+    <meta
+      property="og:image"
+      content="https://football-simulator-sandy.vercel.app/banner-whatsapp.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- 4. CONFIGURAÇÃO PARA TWITTER/X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://football-simulator-sandy.vercel.app/" />
+    <meta name="twitter:title" content="Simulador Flu - Libertadores 2026" />
+    <meta
+      name="twitter:description"
+      content="Simule os cenários de classificação do Fluminense."
+    />
+    <meta
+      name="twitter:image"
+      content="https://football-simulator-sandy.vercel.app/banner-whatsapp.jpg"
+    />
   </head>
   <body>
     <div id="root"></div>
