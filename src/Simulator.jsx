@@ -714,12 +714,9 @@ const Simulador = () => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 mb-4">
-                <span className="w-5 h-5 rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center">
-                  5
+                <span className="rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center px-2 py-1">
+                  RODADA 5
                 </span>
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  Rodada 5
-                </h3>
               </div>
               <div className="space-y-3 sm:space-y-4 mb-6">
                 {ROUND_5.map((m) => (
@@ -733,12 +730,9 @@ const Simulador = () => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 mb-4">
-                <span className="w-5 h-5 rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center">
-                  6
+                <span className="rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center px-2 py-1">
+                  RODADA 6
                 </span>
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  Rodada 6
-                </h3>
               </div>
               <div className="space-y-3 sm:space-y-4">
                 {ROUND_6.map((m) => (
