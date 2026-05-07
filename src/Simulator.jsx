@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 
 // ==========================================
-// 1. DADOS, ESCUDOS E LÓGICA DE NEGÓCIO
+// 1. DADOS, ESCUDOS E HISTÓRICO DE JOGOS
 // ==========================================
 const TEAMS_INFO = {
   'Ind. Rivadavia': {
@@ -40,6 +40,16 @@ const INITIAL_STATS = {
   Fluminense: { pts: 2, j: 4, v: 0, e: 2, d: 2, gp: 2, gc: 5, sg: -3, cv: 1, ca: 11 },
 };
 
+// Histórico oficial até 07/05/2026 para a tabela saber calcular os confrontos diretos
+const PAST_MATCHES = [
+  { home: 'D. La Guaira', away: 'Fluminense', hScore: 0, aScore: 0 },
+  { home: 'Ind. Rivadavia', away: 'Bolívar', hScore: 1, aScore: 0 },
+  { home: 'Bolívar', away: 'D. La Guaira', hScore: 1, aScore: 1 },
+  { home: 'Fluminense', away: 'Ind. Rivadavia', hScore: 1, aScore: 2 },
+  { home: 'Ind. Rivadavia', away: 'D. La Guaira', hScore: 4, aScore: 1 },
+  { home: 'Bolívar', away: 'Fluminense', hScore: 2, aScore: 0 },
+];
+
 const ROUND_5 = [
   { id: 'flu_bol', home: 'Fluminense', away: 'Bolívar' },
   { id: 'dlg_ind', home: 'D. La Guaira', away: 'Ind. Rivadavia' },
@@ -51,7 +61,6 @@ const ROUND_6 = [
 ];
 
 const processMatchData = (teams, matchId, homeTeam, awayTeam, data) => {
-  // Processa Cartões
   const homeCA = parseInt(data[`${matchId}_home_ca`] || '0', 10);
   const homeCV = parseInt(data[`${matchId}_home_cv`] || '0', 10);
   const awayCA = parseInt(data[`${matchId}_away_ca`] || '0', 10);
@@ -62,7 +71,6 @@ const processMatchData = (teams, matchId, homeTeam, awayTeam, data) => {
   teams[awayTeam].ca += awayCA;
   teams[awayTeam].cv += awayCV;
 
-  // Processa Gols
   const homeScore = data[`${matchId}_home`];
   const awayScore = data[`${matchId}_away`];
 
@@ -96,16 +104,70 @@ const processMatchData = (teams, matchId, homeTeam, awayTeam, data) => {
   }
 };
 
+// MOTOR DA TABELA CORRIGIDO (Agora usa Confronto Direto como 1º Critério)
 const generateStandings = (data) => {
   const teams = JSON.parse(JSON.stringify(INITIAL_STATS));
-  [...ROUND_5, ...ROUND_6].forEach((m) =>
-    processMatchData(teams, m.id, m.home, m.away, data),
-  );
+
+  // Captura os jogos simulados para juntar com o passado
+  const simulatedMatches = [];
+  [...ROUND_5, ...ROUND_6].forEach((m) => {
+    processMatchData(teams, m.id, m.home, m.away, data);
+    if (data[`${m.id}_home`] !== '' && data[`${m.id}_away`] !== '') {
+      simulatedMatches.push({
+        home: m.home,
+        away: m.away,
+        hScore: parseInt(data[`${m.id}_home`], 10),
+        aScore: parseInt(data[`${m.id}_away`], 10),
+      });
+    }
+  });
+
+  const allMatches = [...PAST_MATCHES, ...simulatedMatches];
 
   return Object.keys(teams)
     .map((name) => ({ name, ...teams[name] }))
     .sort((a, b) => {
+      // Ordena primeiro por pontos gerais
       if (b.pts !== a.pts) return b.pts - a.pts;
+
+      // CRITÉRIO 1: CONFRONTO DIRETO (Pontos, SG, GP)
+      let aPts = 0,
+        bPts = 0,
+        aSg = 0,
+        bSg = 0,
+        aGp = 0,
+        bGp = 0;
+      allMatches.forEach((m) => {
+        if (m.home === a.name && m.away === b.name) {
+          if (m.hScore > m.aScore) aPts += 3;
+          else if (m.hScore < m.aScore) bPts += 3;
+          else {
+            aPts += 1;
+            bPts += 1;
+          }
+          aSg += m.hScore - m.aScore;
+          bSg += m.aScore - m.hScore;
+          aGp += m.hScore;
+          bGp += m.aScore;
+        } else if (m.home === b.name && m.away === a.name) {
+          if (m.hScore > m.aScore) bPts += 3;
+          else if (m.hScore < m.aScore) aPts += 3;
+          else {
+            aPts += 1;
+            bPts += 1;
+          }
+          bSg += m.hScore - m.aScore;
+          aSg += m.aScore - m.hScore;
+          bGp += m.hScore;
+          aGp += m.aScore;
+        }
+      });
+
+      if (bPts !== aPts) return bPts - aPts; // Desempate por Pontos no Confronto
+      if (bSg !== aSg) return bSg - aSg; // Desempate por SG no Confronto
+      if (bGp !== aGp) return bGp - aGp; // Desempate por GP no Confronto
+
+      // CRITÉRIO 2, 3 e 4: REGRAS GERAIS
       if (b.sg !== a.sg) return b.sg - a.sg;
       if (b.gp !== a.gp) return b.gp - a.gp;
       if (a.cv !== b.cv) return a.cv - b.cv;
@@ -174,7 +236,6 @@ const analyzeTiebreaker = (fluScore, bolScore, standings) => {
       fluJ2,
       bolJ2,
     };
-
   if (fluStats.gp > bolStats.gp)
     return {
       status: 'flu',
@@ -193,7 +254,6 @@ const analyzeTiebreaker = (fluScore, bolScore, standings) => {
       fluJ2,
       bolJ2,
     };
-
   if (fluStats.cv < bolStats.cv)
     return {
       status: 'flu',
@@ -212,7 +272,6 @@ const analyzeTiebreaker = (fluScore, bolScore, standings) => {
       fluJ2,
       bolJ2,
     };
-
   if (fluStats.ca < bolStats.ca)
     return {
       status: 'flu',
@@ -234,7 +293,7 @@ const analyzeTiebreaker = (fluScore, bolScore, standings) => {
 
   return {
     status: 'empate',
-    msg: 'Empate Absoluto! Decisão por Sorteio.',
+    msg: 'Empate Absoluto! Sorteio.',
     aggFlu,
     aggBol,
     fluJ2,
@@ -243,19 +302,19 @@ const analyzeTiebreaker = (fluScore, bolScore, standings) => {
 };
 
 // ==========================================
-// 2. COMPONENTES VISUAIS (COM CARDS)
+// 2. COMPONENTES VISUAIS
 // ==========================================
-
 const CardInput = ({ type, name, value, onChange }) => {
   const isYellow = type === 'ca';
   const colorFocus = isYellow
     ? 'focus:border-yellow-500 focus:ring-yellow-500/20'
     : 'focus:border-red-500 focus:ring-red-500/20';
-  const bgIcon = isYellow ? '🟨' : '🔴';
 
   return (
     <div className="flex items-center gap-1 bg-black/30 px-1.5 py-1 rounded-lg border border-white/5 hover:border-white/20 transition-colors">
-      <span className="text-[10px] sm:text-xs drop-shadow-md">{bgIcon}</span>
+      <span className="text-[10px] sm:text-xs drop-shadow-md opacity-90">
+        {isYellow ? '🟨' : '🔴'}
+      </span>
       <input
         type="number"
         name={name}
@@ -391,12 +450,8 @@ const StandingsTable = ({ standings }) => (
             <th className="py-3 sm:py-4 px-2 sm:px-3 border-b border-white/5 text-zinc-300">
               SG
             </th>
-            <th className="py-3 sm:py-4 px-2 border-b border-white/5" title="Vermelhos">
-              🔴
-            </th>
-            <th className="py-3 sm:py-4 px-2 border-b border-white/5" title="Amarelos">
-              🟨
-            </th>
+            <th className="py-3 sm:py-4 px-2 border-b border-white/5">🔴</th>
+            <th className="py-3 sm:py-4 px-2 border-b border-white/5">🟨</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
@@ -511,7 +566,7 @@ const TiebreakerHUD = ({ tiebreaker }) => {
             Desempate
           </h2>
           <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">
-            Análise de todos os Critérios
+            Análise do Confronto
           </p>
         </div>
       </div>
@@ -580,7 +635,7 @@ const TiebreakerHUD = ({ tiebreaker }) => {
 };
 
 // ==========================================
-// 3. ESTRUTURA PRINCIPAL
+// 3. ESTRUTURA PRINCIPAL (3 COLUNAS)
 // ==========================================
 const Simulador = () => {
   const [data, setData] = useState({
@@ -625,13 +680,11 @@ const Simulador = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0F19] font-sans text-zinc-200 pb-12 sm:pb-20 selection:bg-[#10B981] selection:text-white relative">
-      {/* Container de Efeitos de Fundo: fixed para evitar bugs de rolagem (overflow) no position: sticky */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-0 left-[-20%] w-[80vw] h-[80vw] sm:w-[40vw] sm:h-[40vw] bg-rose-900/10 sm:bg-rose-900/20 rounded-full blur-[80px] sm:blur-[120px]"></div>
         <div className="absolute bottom-0 right-[-20%] w-[80vw] h-[80vw] sm:w-[40vw] sm:h-[40vw] bg-emerald-900/10 rounded-full blur-[80px] sm:blur-[120px]"></div>
       </div>
 
-      {/* Conteúdo Principal expandido para comportar 3 colunas em telas grandes */}
       <div className="max-w-[1400px] mx-auto px-3 sm:px-4 pt-8 sm:pt-12 relative z-10">
         <header className="mb-8 sm:mb-12 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 sm:mb-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
@@ -643,10 +696,10 @@ const Simulador = () => {
           </h1>
         </header>
 
-        {/* LAYOUT DE 3 COLUNAS (Jogos -> Tabela -> HUD) */}
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 items-center">
-          {/* COLUNA 1: JOGOS (Rola a página livremente) */}
-          <div className="w-full lg:w-[320px] xl:w-1/2 shrink-0">
+        {/* LAYOUT DE 3 COLUNAS */}
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 items-start">
+          {/* Coluna 1: JOGOS (Rola livre) */}
+          <div className="w-full lg:w-1/2 shrink-0">
             <div className="bg-[#131826] border border-white/5 rounded-3xl p-4 sm:p-6 shadow-2xl mb-6">
               <div className="flex items-center gap-3 mb-4 sm:mb-6 border-b border-white/5 pb-3 sm:pb-4">
                 <div className="w-1.5 sm:w-2 h-6 sm:h-8 bg-gradient-to-b from-[#10B981] to-transparent rounded-full"></div>
@@ -661,9 +714,12 @@ const Simulador = () => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 mb-4">
-                <span className="rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center px-2 py-1">
-                  RODADA 5
+                <span className="w-5 h-5 rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center">
+                  5
                 </span>
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                  Rodada 5
+                </h3>
               </div>
               <div className="space-y-3 sm:space-y-4 mb-6">
                 {ROUND_5.map((m) => (
@@ -677,9 +733,12 @@ const Simulador = () => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 mb-4">
-                <span className="rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center px-2 py-1">
-                  RODADA 6
+                <span className="w-5 h-5 rounded bg-zinc-800 text-white font-black text-[10px] flex items-center justify-center">
+                  6
                 </span>
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                  Rodada 6
+                </h3>
               </div>
               <div className="space-y-3 sm:space-y-4">
                 {ROUND_6.map((m) => (
@@ -694,7 +753,7 @@ const Simulador = () => {
             </div>
           </div>
 
-          {/* COLUNA 2: TABELA (Sticky - Fica presa no topo enquanto você rola a página) */}
+          {/* Coluna 2: TABELA (Fixada) */}
           <div className="w-full flex-1 min-w-0 lg:sticky lg:top-6 space-y-6">
             <StandingsTable standings={standings} />
             <TiebreakerHUD tiebreaker={tiebreaker} />
