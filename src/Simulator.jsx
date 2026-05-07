@@ -744,6 +744,63 @@ const Simulador = () => {
                   />
                 ))}
               </div>
+
+              <div className="relative group mt-8 bg-[#131826] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-xl hover:bg-[#1A2133] hover:border-white/10 transition-all duration-300 overflow-hidden">
+                {/* Efeito de brilho de fundo no hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#10B981]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+                {/* Cabeçalho do Card */}
+                <div className="relative z-10 flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+                  <h4 className="font-black text-white uppercase tracking-widest text-xs sm:text-sm">
+                    Cenários: Fluminense x Bolívar
+                  </h4>
+                </div>
+
+                {/* Lista de Cenários */}
+                <ul className="relative z-10 space-y-3 text-[10px] sm:text-xs">
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      <strong className="text-zinc-200 font-bold tracking-wide">
+                        Vitória por 3+ gols:{' '}
+                      </strong>
+                      Depende só de si (basta vencer o jogo contra La Guaira).
+                    </p>
+                  </li>
+
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(234,179,8,0.8)]"></span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      <strong className="text-zinc-200 font-bold tracking-wide">
+                        Vitória por exatos 2 gols:{' '}
+                      </strong>
+                      Empate no confronto direto. A vaga será decidida no saldo geral ou
+                      cartões na rodada final.
+                    </p>
+                  </li>
+
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      <strong className="text-zinc-200 font-bold tracking-wide">
+                        Vitória por 1 gol:{' '}
+                      </strong>
+                      Precisa vencer o último jogo e torcer por um tropeço do Bolívar
+                      contra o Ind. Rivadavia.
+                    </p>
+                  </li>
+
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      <strong className="text-red-400 font-bold tracking-wide">
+                        Empate ou Derrota:{' '}
+                      </strong>
+                      Eliminado com uma rodada de antecedência.
+                    </p>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
